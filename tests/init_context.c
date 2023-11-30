@@ -103,15 +103,15 @@ static libusb_testlib_result test_init_context_log_level(void) {
   LIBUSB_TEST_RETURN_ON_ERROR(libusb_init_context(&test_ctx, options,
                                                   /*num_options=*/1));
 
-#ifndef ENABLE_DEBUG_LOGGING
+#if defined(ENABLE_LOGGING) && !defined(ENABLE_DEBUG_LOGGING)
   LIBUSB_EXPECT(==, test_ctx->debug, LIBUSB_LOG_LEVEL_ERROR);
 #endif
 
   LIBUSB_TEST_CLEAN_EXIT(TEST_STATUS_SUCCESS);
 }
 
-static void test_log_cb(libusb_context *ctx, enum libusb_log_level level,
-                        const char *str) {
+static void LIBUSB_CALL test_log_cb(libusb_context *ctx, enum libusb_log_level level,
+                                    const char *str) {
   UNUSED(ctx);
   UNUSED(level);
   UNUSED(str);
@@ -133,7 +133,7 @@ static libusb_testlib_result test_init_context_log_cb(void) {
   LIBUSB_TEST_RETURN_ON_ERROR(libusb_init_context(&test_ctx, options,
                                                   /*num_options=*/1));
 
-#ifndef ENABLE_DEBUG_LOGGING
+#if defined(ENABLE_LOGGING) && !defined(ENABLE_DEBUG_LOGGING)
   LIBUSB_EXPECT(==, test_ctx->log_handler, test_log_cb);
 #endif
 

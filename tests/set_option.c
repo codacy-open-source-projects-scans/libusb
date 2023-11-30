@@ -30,6 +30,7 @@
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <winbase.h>
 
+#if defined(ENABLE_LOGGING)
 static int unsetenv(const char *env) {
   return _putenv_s(env, "");
 }
@@ -39,6 +40,7 @@ static int setenv(const char *env, const char *value, int overwrite) {
     return 0;
   return _putenv_s(env, value);
 }
+#endif
 #endif
 
 #define LIBUSB_TEST_CLEAN_EXIT(code) \
@@ -164,7 +166,7 @@ static libusb_testlib_result test_set_log_level_env(void) {
 
 static libusb_testlib_result test_no_discovery(void)
 {
-#if defined(__linux__)
+#if defined(__linux__) && !defined(CI_WITHOUT_DEVICES)
   libusb_context *test_ctx;
   LIBUSB_TEST_RETURN_ON_ERROR(libusb_init_context(&test_ctx, /*options=*/NULL,
                                                   /*num_options=*/0));
@@ -189,12 +191,14 @@ static libusb_testlib_result test_no_discovery(void)
 #endif
 }
 
-static void test_log_cb(libusb_context *ctx, enum libusb_log_level level,
+#if defined(ENABLE_LOGGING) && !defined(ENABLE_DEBUG_LOGGING)
+static void LIBUSB_CALL test_log_cb(libusb_context *ctx, enum libusb_log_level level,
                         const char *str) {
   UNUSED(ctx);
   UNUSED(level);
   UNUSED(str);
 }
+#endif
 
 
 static libusb_testlib_result test_set_log_cb(void)
