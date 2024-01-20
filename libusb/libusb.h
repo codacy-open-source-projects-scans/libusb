@@ -5,7 +5,7 @@
  * Copyright © 2012 Pete Batard <pete@akeo.ie>
  * Copyright © 2012-2023 Nathan Hjelm <hjelmn@cs.unm.edu>
  * Copyright © 2014-2020 Chris Dickens <christopher.a.dickens@gmail.com>
- * For more information, please visit: http://libusb.info
+ * For more information, please visit: https://libusb.info
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -50,9 +50,9 @@ typedef SSIZE_T ssize_t;
 #include <time.h>
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
-#define ZERO_SIZED_ARRAY		/* [] - valid C99 code */
+#define LIBUSB_FLEXIBLE_ARRAY		/* [] - valid C99 code */
 #else
-#define ZERO_SIZED_ARRAY	0	/* [0] - non-standard, but usually working code */
+#define LIBUSB_FLEXIBLE_ARRAY	0	/* [0] - non-standard, but usually working code */
 #endif /* __STDC_VERSION__ */
 
 /* 'interface' might be defined as a macro on Windows, so we need to
@@ -857,7 +857,7 @@ struct libusb_bos_dev_capability_descriptor {
 	uint8_t  bDevCapabilityType;
 
 	/** Device Capability data (bLength - 3 bytes) */
-	uint8_t  dev_capability_data[ZERO_SIZED_ARRAY];
+	uint8_t  dev_capability_data[LIBUSB_FLEXIBLE_ARRAY];
 };
 
 /** \ingroup libusb_desc
@@ -882,7 +882,7 @@ struct libusb_bos_descriptor {
 	uint8_t  bNumDeviceCaps;
 
 	/** bNumDeviceCap Device Capability Descriptors */
-	struct libusb_bos_dev_capability_descriptor *dev_capability[ZERO_SIZED_ARRAY];
+	struct libusb_bos_dev_capability_descriptor *dev_capability[LIBUSB_FLEXIBLE_ARRAY];
 };
 
 /** \ingroup libusb_desc
@@ -1004,7 +1004,7 @@ struct libusb_platform_descriptor {
 	uint8_t  PlatformCapabilityUUID[16];
 
 	/** Capability data (bLength - 20) */
-	uint8_t  CapabilityData[ZERO_SIZED_ARRAY];
+	uint8_t  CapabilityData[LIBUSB_FLEXIBLE_ARRAY];
 };
 
 /** \ingroup libusb_asyncio
@@ -1384,7 +1384,7 @@ struct libusb_transfer {
 	int num_iso_packets;
 
 	/** Isochronous packet descriptors, for isochronous transfers only. */
-	struct libusb_iso_packet_descriptor iso_packet_desc[ZERO_SIZED_ARRAY];
+	struct libusb_iso_packet_descriptor iso_packet_desc[LIBUSB_FLEXIBLE_ARRAY];
 };
 
 /** \ingroup libusb_misc
@@ -1538,7 +1538,7 @@ struct libusb_init_option {
   enum libusb_option option;
   /** An integer value used by the option (if applicable). */
   union {
-    int64_t ival;
+    int ival;
     libusb_log_cb log_cbval;
   } value;
 };
