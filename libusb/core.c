@@ -2205,8 +2205,8 @@ int API_EXPORTED libusb_set_auto_detach_kernel_driver(
 }
 
 /** \ingroup libusb_lib
- * Deprecated. Use libusb_set_option() or libusb_init_context() instead
- * using the \ref LIBUSB_OPTION_LOG_LEVEL option.
+ * Deprecated. Use libusb_set_option() or libusb_init_context() instead,
+ * with the \ref LIBUSB_OPTION_LOG_LEVEL option.
  */
 void API_EXPORTED libusb_set_debug(libusb_context *ctx, int level)
 {
@@ -2327,15 +2327,14 @@ int API_EXPORTEDV libusb_set_option(libusb_context *ctx,
 				default_context_options[option].arg.ival = arg;
 			} else if (LIBUSB_OPTION_LOG_CB == option) {
 				default_context_options[option].arg.log_cbval = log_cb;
+				libusb_set_log_cb_internal(NULL, log_cb, LIBUSB_LOG_CB_GLOBAL);
 			}
 			usbi_mutex_static_unlock(&default_context_lock);
 		}
 
 		ctx = usbi_get_context(ctx);
-		if (NULL == ctx) {
-			libusb_set_log_cb_internal(NULL, log_cb, LIBUSB_LOG_CB_GLOBAL);
+		if (NULL == ctx)
 			break;
-		}
 
 		switch (option) {
 		case LIBUSB_OPTION_LOG_LEVEL:
