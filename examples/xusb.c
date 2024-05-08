@@ -37,6 +37,10 @@
 // in libusb_config_descriptor => catter for that
 #define usb_interface interface
 
+#ifndef ARRAYSIZE
+#define ARRAYSIZE(array) (sizeof(array) / sizeof(array[0]))
+#endif
+
 // Global variables
 static bool binary_dump = false;
 static bool extra_info = false;
@@ -762,6 +766,17 @@ static void read_ms_winsub_feature_descriptors(libusb_device_handle *handle, uin
 	}
 }
 
+static void print_sublink_speed_attribute(struct libusb_ssplus_sublink_attribute* ss_attr) {
+	static const char exponent[] = " KMG";
+	printf("                  id=%u speed=%u%cbs %s %s SuperSpeed%s",
+		ss_attr->ssid,
+		ss_attr->mantisa,
+		(exponent[ss_attr->exponent]),
+		(ss_attr->type == LIBUSB_SSPLUS_ATTR_TYPE_ASYM)? "Asym" : "Sym",
+		(ss_attr->direction == LIBUSB_SSPLUS_ATTR_DIR_TX)? "TX" : "RX",
+		(ss_attr->protocol == LIBUSB_SSPLUS_ATTR_PROT_SSPLUS)? "+": "" );
+}
+
 static void print_device_cap(struct libusb_bos_dev_capability_descriptor *dev_cap)
 {
 	switch(dev_cap->bDevCapabilityType) {
@@ -810,6 +825,25 @@ static void print_device_cap(struct libusb_bos_dev_capability_descriptor *dev_ca
 		break;
 
 	}
+	case LIBUSB_BT_SUPERSPEED_PLUS_CAPABILITY: {
+		struct libusb_ssplus_usb_device_capability_descriptor *ssplus_usb_device_cap = NULL;
+		libusb_get_ssplus_usb_device_capability_descriptor(NULL, dev_cap, &ssplus_usb_device_cap);
+		if (ssplus_usb_device_cap) {
+			printf("    USB 3.1 capabilities:\n");
+			printf("      num speed IDs: %d\n", ssplus_usb_device_cap->numSublinkSpeedIDs);
+			printf("      minLaneSpeed: %d\n", ssplus_usb_device_cap->ssid);
+			printf("      minRXLanes: %d\n", ssplus_usb_device_cap->minRxLaneCount);
+			printf("      minTXLanes: %d\n", ssplus_usb_device_cap->minTxLaneCount);
+
+			printf("      num speed attribute IDs: %d\n", ssplus_usb_device_cap->numSublinkSpeedAttributes);
+			for(uint8_t i=0 ; i < ssplus_usb_device_cap->numSublinkSpeedAttributes ; i++) {
+				print_sublink_speed_attribute(&ssplus_usb_device_cap->sublinkSpeedAttributes[i]);
+				printf("\n");
+			}
+			libusb_free_ssplus_usb_device_capability_descriptor(ssplus_usb_device_cap);
+		}
+		break;
+	}
 	default:
 		printf("    Unknown BOS device capability %02x:\n", dev_cap->bDevCapabilityType);
 	}
@@ -826,8 +860,9 @@ static int test_device(uint16_t vid, uint16_t pid)
 	int i, j, k, r;
 	int iface, nb_ifaces, first_iface = -1;
 	struct libusb_device_descriptor dev_desc;
-	const char* const speed_name[6] = { "Unknown", "1.5 Mbit/s (USB LowSpeed)", "12 Mbit/s (USB FullSpeed)",
-		"480 Mbit/s (USB HighSpeed)", "5000 Mbit/s (USB SuperSpeed)", "10000 Mbit/s (USB SuperSpeedPlus)" };
+	const char* const speed_name[] = { "Unknown", "1.5 Mbit/s (USB LowSpeed)", "12 Mbit/s (USB FullSpeed)",
+		"480 Mbit/s (USB HighSpeed)", "5000 Mbit/s (USB SuperSpeed)", "10000 Mbit/s (USB SuperSpeedPlus)",
+		"20000 Mbit/s (USB SuperSpeedPlus x2)" };
 	unsigned char string[128];
 	uint8_t string_index[3];	// indexes of the string descriptors
 	uint8_t endpoint_in = 0, endpoint_out = 0;	// default IN and OUT endpoints
@@ -854,7 +889,8 @@ static int test_device(uint16_t vid, uint16_t pid)
 			printf(" (from root hub)\n");
 		}
 		r = libusb_get_device_speed(dev);
-		if ((r<0) || (r>5)) r=0;
+		if ((r < 0) || ((size_t)r >= ARRAYSIZE(speed_name)))
+			r = 0;
 		printf("             speed: %s\n", speed_name[r]);
 	}
 
