@@ -2811,9 +2811,8 @@ void API_EXPORTED libusb_free_pollfds(const struct libusb_pollfd **pollfds)
  * device. This function ensures transfers get cancelled appropriately.
  * Callers of this function must hold the events_lock.
  */
-void usbi_handle_disconnect(struct libusb_device_handle *dev_handle)
+void usbi_handle_disconnect(struct libusb_context *ctx, struct libusb_device_handle *dev_handle)
 {
-	struct libusb_context *ctx = HANDLE_CTX(dev_handle);
 	struct usbi_transfer *cur;
 	struct usbi_transfer *to_cancel;
 
@@ -2853,9 +2852,11 @@ void usbi_handle_disconnect(struct libusb_device_handle *dev_handle)
 		if (!to_cancel)
 			break;
 
+#ifdef ENABLE_LOGGING
 		struct libusb_transfer *transfer_to_cancel = USBI_TRANSFER_TO_LIBUSB_TRANSFER(to_cancel);
 		usbi_dbg(ctx, "cancelling transfer %p from disconnect",
 			 (void *) transfer_to_cancel);
+#endif
 
 		usbi_mutex_lock(&to_cancel->lock);
 		usbi_backend.clear_transfer_priv(to_cancel);
